@@ -1,0 +1,41 @@
+﻿{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "x64-debug",
+            "displayName": "x64 Debug",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "environment": {
+                "SoapySDR_DIR": "C:/Program Files/PothosSDR/cmake"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "SoapySDR_DIR": "C:/Program Files/PothosSDR/cmake"
+            }
+        },
+        {
+            "name": "x64-release",
+            "displayName": "x64 Release",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "environment": {
+                "SoapySDR_DIR": "C:/Program Files/PothosSDR/cmake"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "SoapySDR_DIR": "C:/Program Files/PothosSDR/cmake"
+            }
+        }
+    ]
+}
