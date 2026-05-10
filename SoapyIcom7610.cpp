@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SoapyIcom7610.cpp  –  SoapySDR-Plugin für den Icom IC-7610
  * Projekt: IC-7610 I/Q Streaming Tool
  * Autor:   OE3GAS
@@ -24,18 +24,18 @@
 #include <sstream>
 #include <iomanip>
 
- // ---------------------------------------------------------------------------
- // Konstanten
- // ---------------------------------------------------------------------------
-static constexpr DWORD IO_TIMEOUT_MS = 2000;
-static constexpr DWORD IO_TIMEOUT_IQ = 1000;   // Kürzer für Stream-Loop
+// ---------------------------------------------------------------------------
+// Konstanten
+// ---------------------------------------------------------------------------
+static constexpr DWORD IO_TIMEOUT_MS  = 2000;
+static constexpr DWORD IO_TIMEOUT_IQ  = 1000;   // Kürzer für Stream-Loop
 static constexpr ULONG MAX_READ_BYTES = 65536;
 
 // ---------------------------------------------------------------------------
 // Konstruktor / Destruktor
 // ---------------------------------------------------------------------------
 
-IC7610Device::IC7610Device(const SoapySDR::Kwargs& args)
+IC7610Device::IC7610Device(const SoapySDR::Kwargs &args)
 {
     // Serial aus args lesen, Fallback auf bekannte Serial
     m_serial = "23001774";
@@ -114,10 +114,10 @@ IC7610Device::~IC7610Device()
 SoapySDR::Kwargs IC7610Device::getHardwareInfo() const
 {
     SoapySDR::Kwargs info;
-    info["serial"] = m_serial;
-    info["product"] = "IC-7610 SuperSpeed-FIFO Bridge";
-    info["vendor"] = "Icom Inc.";
-    info["ftdi_chip"] = "FT601";
+    info["serial"]      = m_serial;
+    info["product"]     = "IC-7610 SuperSpeed-FIFO Bridge";
+    info["vendor"]      = "Icom Inc.";
+    info["ftdi_chip"]   = "FT601";
     info["usb_version"] = "USB 3.1 Gen1";
     return info;
 }
@@ -143,9 +143,9 @@ bool IC7610Device::getFullDuplex(const int /*dir*/, const size_t /*ch*/) const
 
 SoapySDR::Stream* IC7610Device::setupStream(
     const int dir,
-    const std::string& format,
-    const std::vector<size_t>&/*channels*/,
-    const SoapySDR::Kwargs&/*args*/)
+    const std::string &format,
+    const std::vector<size_t> &/*channels*/,
+    const SoapySDR::Kwargs &/*args*/)
 {
     if (dir != SOAPY_SDR_RX)
         throw std::runtime_error("IC7610: Nur RX unterstützt");
@@ -157,16 +157,16 @@ SoapySDR::Stream* IC7610Device::setupStream(
     // Für mehrere Streams wäre ein echtes Handle-Objekt nötig
     return reinterpret_cast<SoapySDR::Stream*>(
         format == SOAPY_SDR_CF32 ? 2 : 1
-        );
+    );
 }
 
-void IC7610Device::closeStream(SoapySDR::Stream*/*stream*/)
+void IC7610Device::closeStream(SoapySDR::Stream */*stream*/)
 {
     // Nichts zu tun — Ressourcen werden im Destruktor freigegeben
 }
 
 int IC7610Device::activateStream(
-    SoapySDR::Stream*/*stream*/,
+    SoapySDR::Stream */*stream*/,
     const int /*flags*/,
     const long long /*timeNs*/,
     const size_t /*numElems*/)
@@ -186,7 +186,7 @@ int IC7610Device::activateStream(
 }
 
 int IC7610Device::deactivateStream(
-    SoapySDR::Stream*/*stream*/,
+    SoapySDR::Stream */*stream*/,
     const int /*flags*/,
     const long long /*timeNs*/)
 {
@@ -207,15 +207,15 @@ int IC7610Device::deactivateStream(
 }
 
 int IC7610Device::readStream(
-    SoapySDR::Stream* stream,
-    void* const* buffs,
+    SoapySDR::Stream *stream,
+    void * const *buffs,
     const size_t numElems,
-    int& flags,
-    long long& timeNs,
+    int &flags,
+    long long &timeNs,
     const long timeoutUs)
 {
-    flags = 0;
-    timeNs = 0;
+    flags   = 0;
+    timeNs  = 0;
 
     if (!m_streaming.load())
         return SOAPY_SDR_NOT_SUPPORTED;
@@ -223,7 +223,7 @@ int IC7610Device::readStream(
     // CS16: 4 Bytes pro Sample (2x int16)
     // CF32: 8 Bytes pro Sample (2x float) — wir lesen CS16 und konvertieren
     const bool convertToFloat = (reinterpret_cast<intptr_t>(stream) == 2);
-    const size_t bytesToRead = numElems * 4;  // immer CS16 vom Radio
+    const size_t bytesToRead  = numElems * 4;  // immer CS16 vom Radio
 
     // Temporärer Puffer für CS16-Rohdaten
     std::vector<uint8_t> raw(bytesToRead);
@@ -261,8 +261,8 @@ int IC7610Device::readStream(
         // CS16 → CF32 konvertieren
         // Radio liefert int16 I, int16 Q (Little-Endian)
         // Normalisierung: / 32768.0f für Wertebereich ±1.0
-        const int16_t* src = reinterpret_cast<const int16_t*>(raw.data());
-        float* dst = reinterpret_cast<float*>(buffs[0]);
+        const int16_t *src = reinterpret_cast<const int16_t*>(raw.data());
+        float         *dst = reinterpret_cast<float*>(buffs[0]);
 
         for (size_t i = 0; i < samplesRead * 2; ++i)
             dst[i] = static_cast<float>(src[i]) / 32768.0f;
@@ -274,7 +274,7 @@ int IC7610Device::readStream(
 std::string IC7610Device::getNativeStreamFormat(
     const int /*dir*/,
     const size_t /*ch*/,
-    double& fullScale) const
+    double &fullScale) const
 {
     fullScale = 32768.0;  // int16 Maximum
     return SOAPY_SDR_CS16;
@@ -286,7 +286,7 @@ std::vector<std::string> IC7610Device::getStreamFormats(
     return { SOAPY_SDR_CS16, SOAPY_SDR_CF32 };
 }
 
-size_t IC7610Device::getStreamMTU(SoapySDR::Stream*/*stream*/) const
+size_t IC7610Device::getStreamMTU(SoapySDR::Stream */*stream*/) const
 {
     // 64 KiB / 4 Bytes pro Sample = 16384 Samples pro Block
     return BLOCK_SIZE / 4;
@@ -299,7 +299,7 @@ size_t IC7610Device::getStreamMTU(SoapySDR::Stream*/*stream*/) const
 void IC7610Device::setFrequency(
     const int /*dir*/, const size_t /*ch*/,
     const double freq,
-    const SoapySDR::Kwargs&/*args*/)
+    const SoapySDR::Kwargs &/*args*/)
 {
     if (freq < FREQ_MIN_HZ || freq > FREQ_MAX_HZ)
     {
@@ -317,14 +317,14 @@ void IC7610Device::setFrequency(
 
 double IC7610Device::getFrequency(
     const int /*dir*/, const size_t /*ch*/,
-    const std::string&/*name*/) const
+    const std::string &/*name*/) const
 {
     return m_frequency;
 }
 
 SoapySDR::RangeList IC7610Device::getFrequencyRange(
     const int /*dir*/, const size_t /*ch*/,
-    const std::string&/*name*/) const
+    const std::string &/*name*/) const
 {
     return { SoapySDR::Range(FREQ_MIN_HZ, FREQ_MAX_HZ) };
 }
@@ -390,7 +390,7 @@ std::vector<std::string> IC7610Device::listAntennas(
 }
 
 void IC7610Device::setAntenna(
-    const int /*dir*/, const size_t /*ch*/, const std::string& name)
+    const int /*dir*/, const size_t /*ch*/, const std::string &name)
 {
     m_antenna = name;
 }
@@ -406,7 +406,7 @@ std::string IC7610Device::getAntenna(
 // ---------------------------------------------------------------------------
 
 std::vector<uint8_t> IC7610Device::buildCiv(
-    const std::vector<uint8_t>& cmdBytes) const
+    const std::vector<uint8_t> &cmdBytes) const
 {
     // Kern-Frame: FE FE 98 E0 <cmd> FD
     std::vector<uint8_t> frame = {
@@ -423,7 +423,7 @@ std::vector<uint8_t> IC7610Device::buildCiv(
     return frame;
 }
 
-void IC7610Device::civWrite(const std::vector<uint8_t>& cmdBytes) const
+void IC7610Device::civWrite(const std::vector<uint8_t> &cmdBytes) const
 {
     auto frame = buildCiv(cmdBytes);
     ftWritePipe(PIPE_CMD_OUT, frame.data(), static_cast<ULONG>(frame.size()));
@@ -431,7 +431,7 @@ void IC7610Device::civWrite(const std::vector<uint8_t>& cmdBytes) const
 }
 
 std::vector<uint8_t> IC7610Device::civWriteRead(
-    const std::vector<uint8_t>& cmdBytes) const
+    const std::vector<uint8_t> &cmdBytes) const
 {
     // NUR vor Stream-Start aufrufen!
     civWrite(cmdBytes);
@@ -439,13 +439,13 @@ std::vector<uint8_t> IC7610Device::civWriteRead(
     std::vector<uint8_t> response(64, 0);
     ULONG transferred = 0;
     ftReadPipe(PIPE_CMD_IN, response.data(),
-        static_cast<ULONG>(response.size()),
-        &transferred, IO_TIMEOUT_MS);
+               static_cast<ULONG>(response.size()),
+               &transferred, IO_TIMEOUT_MS);
     response.resize(transferred);
     return response;
 }
 
-bool IC7610Device::civIsOk(const std::vector<uint8_t>& resp) const
+bool IC7610Device::civIsOk(const std::vector<uint8_t> &resp) const
 {
     // OK-Frame: FE FE E0 98 FB FD (mindestens 6 Bytes)
     if (resp.size() < 6) return false;
@@ -498,16 +498,16 @@ std::vector<uint8_t> IC7610Device::encodeBcdFrequency(double freqHz)
     std::vector<uint8_t> result;
     for (int i = 0; i < 10; i += 2)
     {
-        int low = digits[9 - i] - '0';
+        int low  = digits[9 - i]     - '0';
         int high = digits[8 - i] - '0';
         result.push_back(static_cast<uint8_t>((high << 4) | low));
     }
     return result;  // 5 Bytes
 }
 
-double IC7610Device::decodeBcdFrequency(const uint8_t* data, size_t len)
+double IC7610Device::decodeBcdFrequency(const uint8_t *data, size_t len)
 {
-    double freq = 0.0;
+    double freq       = 0.0;
     double multiplier = 1.0;
     for (size_t i = 0; i < len && i < 5; ++i)
     {
@@ -522,7 +522,7 @@ double IC7610Device::decodeBcdFrequency(const uint8_t* data, size_t len)
 // ---------------------------------------------------------------------------
 
 DWORD IC7610Device::ftWritePipe(
-    UCHAR pipe, const void* buf, ULONG len) const
+    UCHAR pipe, const void *buf, ULONG len) const
 {
     OVERLAPPED ov = {};
     ov.hEvent = m_ioEvent;
@@ -546,8 +546,8 @@ DWORD IC7610Device::ftWritePipe(
 }
 
 DWORD IC7610Device::ftReadPipe(
-    UCHAR pipe, void* buf, ULONG len,
-    ULONG* transferred, DWORD timeoutMs) const
+    UCHAR pipe, void *buf, ULONG len,
+    ULONG *transferred, DWORD timeoutMs) const
 {
     OVERLAPPED ov = {};
     ov.hEvent = m_ioEvent;
@@ -581,16 +581,16 @@ DWORD IC7610Device::ftReadPipe(
 // ---------------------------------------------------------------------------
 
 static std::vector<SoapySDR::Kwargs> findIC7610(
-    const SoapySDR::Kwargs& args)
+    const SoapySDR::Kwargs &args)
 {
     // Gerät immer anbieten — eine einfache Erkennung
     // (Verbesserung möglich: FT_CreateDeviceInfoList aufrufen)
     std::vector<SoapySDR::Kwargs> results;
 
     SoapySDR::Kwargs devArgs;
-    devArgs["driver"] = "IC7610";
-    devArgs["label"] = "Icom IC-7610";
-    devArgs["serial"] = "23001774";
+    devArgs["driver"]  = "IC7610";
+    devArgs["label"]   = "Icom IC-7610";
+    devArgs["serial"]  = "23001774";
     devArgs["product"] = "IC-7610 SuperSpeed-FIFO Bridge";
 
     // Falls serial als Filter angegeben, nur passende zurückgeben
@@ -601,7 +601,7 @@ static std::vector<SoapySDR::Kwargs> findIC7610(
     return results;
 }
 
-static SoapySDR::Device* makeIC7610(const SoapySDR::Kwargs& args)
+static SoapySDR::Device* makeIC7610(const SoapySDR::Kwargs &args)
 {
     return new IC7610Device(args);
 }
@@ -612,6 +612,4 @@ static SoapySDR::Registry registerIC7610(
     &findIC7610,
     &makeIC7610,
     SOAPY_SDR_ABI_VERSION
-    );
-// Verhindert dass MSVC den Registry-Code wegoptimiert
-extern "C" __declspec(dllexport) void SoapyIC7610_loader() {}
+);

@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.14)
 
 if(POLICY CMP0141)
   cmake_policy(SET CMP0141 NEW)
@@ -15,8 +15,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # SoapySDR (installiert von PothosSDR nach C:\Program Files\PothosSDR)
 # ---------------------------------------------------------------------------
 find_package(SoapySDR REQUIRED)
-message(STATUS "SoapySDR found: ${SoapySDR_FOUND}")
-message(STATUS "SoapySDR include: ${SoapySDR_INCLUDE_DIR}")
 
 # ---------------------------------------------------------------------------
 # Plugin als Shared Library (.dll) — kein Executable!
@@ -33,10 +31,7 @@ add_library(SoapyIcom7610 SHARED
 #   FTD3XX.h   → aus \inc\
 #   FTD3XX.lib → aus \lib\cpp\x64\  (für x64 Release/Debug)
 # ---------------------------------------------------------------------------
-# SoapySDR Include-Pfad — PothosSDR Export-Target setzt ihn nicht korrekt
-# daher explizit angeben
 target_include_directories(SoapyIcom7610 PRIVATE
-    "C:/Program Files/PothosSDR/include"
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
@@ -45,11 +40,8 @@ target_link_directories(SoapyIcom7610 PRIVATE
 )
 
 target_link_libraries(SoapyIcom7610 PRIVATE
-    "C:/Program Files/PothosSDR/lib/SoapySDR.lib"
+    SoapySDR
     FTD3XX
-)
-target_link_options(SoapyIcom7610 PRIVATE
-    "/INCLUDE:SoapyIC7610_loader"
 )
 
 # ---------------------------------------------------------------------------
