@@ -1,5 +1,5 @@
 """
-  –  SoapySDR Python-Test für den Icom IC-7610
+soapy_test.py  –  SoapySDR Python-Test für den Icom IC-7610
 Projekt: IC-7610 I/Q Streaming Tool
 Autor:   OE3GAS
 Stand:   2026-05-09
@@ -40,8 +40,8 @@ if not results:
     print("  FEHLER: Kein IC-7610 gefunden!")
     sys.exit(1)
 
-print(f"  Gefunden: {results[0]['label']}")
-print(f"  Serial:   {results[0]['serial']}")
+print(f"  Gefunden: {results[0].get('label', '?')}")
+print(f"  Serial:   {results[0].get('serial', '?')}")
 
 # ---------------------------------------------------------------------------
 # Schritt 2: Gerät öffnen
