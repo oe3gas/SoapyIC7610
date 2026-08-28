@@ -1,0 +1,33 @@
+# CMakeLists-mingw.txt - Build unter MSYS2/MinGW64 (fuer SigDigger-CI)
+# Wird im CI per "cp CMakeLists-mingw.txt CMakeLists.txt" aktiviert.
+# FTD3XX_DIR muss auf ein Verzeichnis mit FTD3XX.h und FTD3XX.dll zeigen.
+cmake_minimum_required(VERSION 3.14)
+project(SoapyIcom7610 VERSION 0.3.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(SoapySDR REQUIRED CONFIG)
+
+if(NOT DEFINED FTD3XX_DIR)
+    message(FATAL_ERROR "Bitte -DFTD3XX_DIR=<Pfad zu FTD3XX.h/.dll> angeben")
+endif()
+
+add_library(SoapyIcom7610 MODULE
+    SoapyIcom7610.cpp
+    SoapyIcom7610.h
+)
+
+target_include_directories(SoapyIcom7610 PRIVATE
+    ${FTD3XX_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+# MinGW kann direkt gegen die DLL linken - keine .lib noetig
+target_link_libraries(SoapyIcom7610 PRIVATE
+    SoapySDR
+    "${FTD3XX_DIR}/FTD3XX.dll"
+)
+
+# Kein "lib"-Praefix: Ergebnis heisst SoapyIcom7610.dll
+set_target_properties(SoapyIcom7610 PROPERTIES PREFIX "")
